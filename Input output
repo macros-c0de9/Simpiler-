@@ -8,3 +8,4 @@ def io(a,b):
 			return input(b)
 	if a!='i' and a!='o':
 		print("error")
+
