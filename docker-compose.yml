@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # API Server
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+      - DEBUG=False
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/simpiler
+      - JWT_SECRET_KEY=change_this_in_production
+      - UPLOAD_FOLDER=/tmp/simpiler/uploads
+      - BINARY_FOLDER=/tmp/simpiler/binaries
+      - ARDUINO_WORK_DIR=/tmp/simpiler/work
+    volumes:
+      - ./server:/app
+      - simpiler_data:/tmp/simpiler
+    depends_on:
+      - redis
+      - db
+    restart: unless-stopped
+
+  # Redis for queue management
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # PostgreSQL database
+  db:
+    image: postgres:13-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=simpiler
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Nginx for SSL termination and static file serving
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/www:/var/www/html
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  simpiler_data:
+  redis_data:
+  postgres_data:
+
