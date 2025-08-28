@@ -13,8 +13,8 @@ services:
       - FLASK_ENV=production
       - DEBUG=False
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/simpiler
-      - JWT_SECRET_KEY=change_this_in_production
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres@db:5432/simpiler}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-changeme}
       - UPLOAD_FOLDER=/tmp/simpiler/uploads
       - BINARY_FOLDER=/tmp/simpiler/binaries
       - ARDUINO_WORK_DIR=/tmp/simpiler/work
@@ -41,9 +41,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=simpiler
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_DB=${POSTGRES_DB:-simpiler}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -66,4 +66,3 @@ volumes:
   simpiler_data:
   redis_data:
   postgres_data:
-

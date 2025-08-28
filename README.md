@@ -66,8 +66,12 @@ The system consists of three main components:
 
 1. Install Docker and Docker Compose
 2. Clone the repository
-3. Navigate to the server directory
-4. Build and start the server:
+3. Copy the example environment file and modify it with your secure credentials:
+   ```
+   cp .env.example .env
+   ```
+4. Navigate to the server directory
+5. Build and start the server:
    ```
    docker-compose up -d
    ```
@@ -100,4 +104,3 @@ See [Architecture Documentation](docs/architecture.md) for detailed system archi
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
