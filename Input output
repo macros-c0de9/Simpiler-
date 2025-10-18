@@ -1,4 +1,4 @@
-def io(a,b):
+def io(a,b=0):
 	if a== 'o':
 		print(b)
 	if a=='i':
@@ -8,4 +8,5 @@ def io(a,b):
 			return input(b)
 	if a!='i' and a!='o':
 		print("error")
+        break
 
