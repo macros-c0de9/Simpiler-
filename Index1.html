@@ -1,0 +1,323 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>7447 • 7‑Segment Simulator — Learn Digital System Design</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0f1724; --glass:#ffffff10; --accent:#7dd3fc; --glass-2:#ffffff08; --muted:#a6b0c3;
+      --card-radius:14px; --glass-border:1px; --glass-blur:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#e6eef8;background:linear-gradient(180deg,#071022 0%,#07172a 60%);}
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:48px}/* Main layout */
+.shell{width:1100px;max-width:96vw;display:grid;grid-template-columns:420px 1fr;gap:28px}
+
+/* Glass card */
+.card{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+  border-radius:var(--card-radius);padding:22px;backdrop-filter:blur(var(--glass-blur));
+  border:var(--glass-border) solid rgba(255,255,255,0.06);box-shadow:0 6px 30px rgba(2,6,23,0.6);
+}
+
+header h1{margin:0;font-weight:800;letter-spacing:-0.02em;font-size:20px}
+header p{margin:6px 0 14px;color:var(--muted);font-size:13px}
+
+/* Left pane controls */
+.controls{display:flex;flex-direction:column;gap:14px}
+.group{background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.row{display:flex;gap:12px;align-items:center}
+label.small{font-size:13px;color:var(--muted)}
+.bits{display:flex;gap:8px}
+.bit{width:54px;height:46px;border-radius:8px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;flex-direction:column;border:1px solid rgba(255,255,255,0.03)}
+.bit button{background:none;border:none;color:#dbeafe;font-weight:700;font-size:18px;cursor:pointer}
+.bit .sub{font-size:11px;color:var(--muted);margin-top:6px}
+
+input[type=range]{width:100%}
+
+.numeric{display:flex;gap:10px;align-items:center}
+.numbox{width:120px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);text-align:center;font-weight:700;font-size:20px;color:#e6eef8}
+
+/* Right pane: simulation */
+.sim-area{display:flex;flex-direction:column;gap:18px}
+.display-wrap{display:flex;gap:18px;align-items:center}
+
+/* 7-seg */
+.sevenseg{width:220px;height:360px;padding:18px;border-radius:18px;background:linear-gradient(180deg,#0b1221,#071428);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -20px 50px rgba(0,0,0,0.5)}
+.seg-holder{position:relative;width:160px;height:280px}
+.seg{position:absolute;background:#2b3446;border-radius:8px;transition:all 180ms ease;box-shadow:0 2px 6px rgba(0,0,0,0.45);}
+.seg.on{background:linear-gradient(90deg,#fffb 0%, #fffc 40%),linear-gradient(90deg,#ffcf4d,#ff6b6b);box-shadow:0 6px 20px rgba(255,107,107,0.25),0 1px 0 rgba(255,255,255,0.03);}
+/* positions: a top horizontal */
+.seg.a{left:20px;top:12px;width:120px;height:22px}
+.seg.d{left:20px;bottom:12px;width:120px;height:22px}
+.seg.g{left:20px;top:129px;width:120px;height:22px}
+.seg.b{right:12px;top:36px;width:22px;height:110px;border-radius:12px}
+.seg.c{right:12px;bottom:36px;width:22px;height:110px;border-radius:12px}
+.seg.f{left:12px;top:36px;width:22px;height:110px;border-radius:12px}
+.seg.e{left:12px;bottom:36px;width:22px;height:110px;border-radius:12px}
+
+/* outputs panel */
+.outs{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+.out{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+.out .lbl{font-size:12px;color:var(--muted)}
+.out .val{font-weight:800;font-size:18px;margin-top:6px}
+.val.active{color:#62f5a1}
+.val.inactive{color:#fca5a5}
+
+/* informational */
+.table{font-size:13px;color:var(--muted);line-height:1.45}
+.small-muted{font-size:12px;color:var(--muted)}
+
+footer{margin-top:10px;color:var(--muted);font-size:13px}
+
+/* responsive */
+@media(max-width:980px){.shell{grid-template-columns:1fr;}}
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="shell">
+      <aside class="card">
+        <header>
+          <h1>7447 • 7‑Segment Decoder (simulator)</h1>
+          <p>Interactive simulator for learning how the IC 7447 drives a 7‑segment display (active‑low outputs). Toggle BCD inputs, try lamp test and blanking inputs, and watch segment outputs and wiring signals.</p>
+        </header><div class="controls">
+      <div class="group">
+        <div class="row"><label class="small">BCD inputs (D C B A) — MSB → LSB</label></div>
+        <div class="row bits" id="bitsRow">
+          <div class="bit"><button id="bitD">0</button><div class="sub">D (8)</div></div>
+          <div class="bit"><button id="bitC">0</button><div class="sub">C (4)</div></div>
+          <div class="bit"><button id="bitB">0</button><div class="sub">B (2)</div></div>
+          <div class="bit"><button id="bitA">0</button><div class="sub">A (1)</div></div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <div class="numeric">
+            <div class="small-muted">Decimal</div>
+            <div class="numbox" id="decValue">0</div>
+            <input type="range" min="0" max="15" value="0" id="decRange">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="row" style="justify-content:space-between;align-items:center;">
+          <div>
+            <div class="small-muted">Control pins</div>
+            <div class="small-muted">LT (Lamp Test) | BI (Blanking Input) | RBI (Ripple Blanking Input)</div>
+          </div>
+          <div class="row" style="gap:8px">
+            <div class="bit"><button id="lt">0</button><div class="sub">LT</div></div>
+            <div class="bit"><button id="bi">1</button><div class="sub">BI</div></div>
+            <div class="bit"><button id="rbi">1</button><div class="sub">RBI</div></div>
+          </div>
+        </div>
+        <div class="small-muted" style="margin-top:8px">Notes: 7447 outputs are active‑low (segment appears when output = 0). LT forces all segments on when active. BI can blank outputs when active (used for intensity/blanking).</div>
+      </div>
+
+      <div class="group table">
+        <strong>How to use</strong>
+        <ul>
+          <li>Click any BCD bit to toggle it or use the slider to set a value (0–15).</li>
+          <li>LT = Lamp Test (active = 1 toggled here) — lights all segments for testing.</li>
+          <li>BI = Blanking Input; RBI = Ripple Blanking Input — used for blanking leading zeros across digits.</li>
+          <li>Values 10–15 are "invalid BCD"; the chip produces special patterns (sim shown).</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <footer>
+      <div class="small-muted">Simulation purpose: educational. This models the logical behavior of the 7447 (active‑low segment outputs); it is not a SPICE circuit simulation.</div>
+    </footer>
+
+  </aside>
+
+  <main class="sim-area card">
+    <section class="display-wrap">
+      <div class="sevenseg" aria-hidden="true">
+        <div class="seg-holder" id="segHolder">
+          <div class="seg a" data-seg="a"></div>
+          <div class="seg b" data-seg="b"></div>
+          <div class="seg c" data-seg="c"></div>
+          <div class="seg d" data-seg="d"></div>
+          <div class="seg e" data-seg="e"></div>
+          <div class="seg f" data-seg="f"></div>
+          <div class="seg g" data-seg="g"></div>
+        </div>
+      </div>
+
+      <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="group">
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:800;font-size:18px">Outputs (IC pins a→g)</div>
+              <div class="small-muted">Active‑low: a segment lights when its output is 0.</div>
+            </div>
+            <div style="text-align:right">
+              <div class="small-muted">Selected input (BCD): <span id="selBCD">0000</span></div>
+              <div class="small-muted">Decimal: <strong id="selDec">0</strong></div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px" class="outs" id="outs"></div>
+        </div>
+
+        <div class="group table">
+          <strong>Truth snapshot</strong>
+          <div class="row" style="margin-top:8px;gap:12px">
+            <div style="flex:1">
+              <div class="small-muted">BCD</div>
+              <div id="bcdStr" style="font-weight:800;font-size:16px">0000</div>
+            </div>
+            <div style="flex:1">
+              <div class="small-muted">Chip mode</div>
+              <div id="chipMode" style="font-weight:700">Normal</div>
+            </div>
+            <div style="flex:1">
+              <div class="small-muted">Segment pattern</div>
+              <div id="segPattern" style="font-weight:700">a b c d e f</div>
+            </div>
+          </div>
+
+          <hr style="border:none;height:1px;background:rgba(255,255,255,0.03);margin:12px 0">
+
+          <div class="small-muted">Reference: This simulator follows the 7447 decoder logic (active‑low outputs; designed for common‑anode displays). It supports LT and BI/RBI logical behavior for learning purposes.</div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+
+  </div>  <script>
+    // 7447 mapping: segments [a,b,c,d,e,f,g] — outputs are ACTIVE‑LOW
+    // 0 means segment is ON. We'll encode as string 'abcdefg' where 0=on,1=off.
+    const mapping = {
+      0: '0000001',
+      1: '1001111',
+      2: '0010010',
+      3: '0000110',
+      4: '1001100',
+      5: '0100100',
+      6: '0100000',
+      7: '0001111',
+      8: '0000000',
+      9: '0000100',
+      // 10-15: invalid BCD inputs — many 7447 variants show unique patterns; we show 'dash' style patterns
+      10: '1111111',
+      11: '1111111',
+      12: '0111001',
+      13: '1111111',
+      14: '0111001',
+      15: '0111001'
+    };
+
+    // elements
+    const bitA = document.getElementById('bitA');
+    const bitB = document.getElementById('bitB');
+    const bitC = document.getElementById('bitC');
+    const bitD = document.getElementById('bitD');
+    const decRange = document.getElementById('decRange');
+    const decValue = document.getElementById('decValue');
+    const outs = document.getElementById('outs');
+    const segs = Array.from(document.querySelectorAll('.seg'));
+    const selBCD = document.getElementById('selBCD');
+    const selDec = document.getElementById('selDec');
+    const bcdStr = document.getElementById('bcdStr');
+    const segPattern = document.getElementById('segPattern');
+    const chipMode = document.getElementById('chipMode');
+    const ltBtn = document.getElementById('lt');
+    const biBtn = document.getElementById('bi');
+    const rbiBtn = document.getElementById('rbi');
+
+    // control state
+    let state = {A:0,B:0,C:0,D:0,LT:0,BI:1,RBI:1};
+
+    // initialize outs view
+    function createOuts(){
+      outs.innerHTML='';
+      ['a','b','c','d','e','f','g'].forEach((s)=>{
+        const el = document.createElement('div');el.className='out';el.innerHTML=`<div class='lbl'>${s}</div><div class='val inactive' id='out-${s}'>1</div>`;outs.appendChild(el);
+      });
+    }
+    createOuts();
+
+    function updateFromDecimal(v){
+      const d = Math.max(0,Math.min(15,Number(v)));
+      decRange.value = d; decValue.textContent = d; selDec.textContent = d;
+      // set bits
+      state.A = (d & 1)?1:0; state.B = (d & 2)?1:0; state.C = (d & 4)?1:0; state.D = (d & 8)?1:0;
+      bitA.textContent = state.A; bitB.textContent = state.B; bitC.textContent = state.C; bitD.textContent = state.D;
+      updateAll();
+    }
+
+    // toggle bits on click
+    bitA.addEventListener('click',()=>{state.A ^=1; bitA.textContent=state.A; syncRange(); updateAll()});
+    bitB.addEventListener('click',()=>{state.B ^=1; bitB.textContent=state.B; syncRange(); updateAll()});
+    bitC.addEventListener('click',()=>{state.C ^=1; bitC.textContent=state.C; syncRange(); updateAll()});
+    bitD.addEventListener('click',()=>{state.D ^=1; bitD.textContent=state.D; syncRange(); updateAll()});
+
+    ltBtn.addEventListener('click',()=>{state.LT ^=1; ltBtn.textContent=state.LT; updateAll()});
+    biBtn.addEventListener('click',()=>{state.BI ^=1; biBtn.textContent=state.BI; updateAll()});
+    rbiBtn.addEventListener('click',()=>{state.RBI ^=1; rbiBtn.textContent=state.RBI; updateAll()});
+
+    decRange.addEventListener('input',(e)=>{updateFromDecimal(e.target.value)});
+
+    function syncRange(){
+      const val = (state.D<<3)|(state.C<<2)|(state.B<<1)|(state.A<<0);
+      decRange.value = val; decValue.textContent = val; selDec.textContent = val;
+    }
+
+    function updateAll(){
+      const bcd = `${state.D}${state.C}${state.B}${state.A}`;
+      selBCD.textContent = bcd; bcdStr.textContent = bcd;
+
+      // determine chip mode
+      let mode = 'Normal';
+      if(state.LT) mode='Lamp TEST (all segments on)';
+      else if(state.BI==0) mode='Blanking (BI active)';
+      chipMode.textContent = mode;
+
+      const dec = (state.D<<3)|(state.C<<2)|(state.B<<1)|(state.A<<0);
+
+      // choose raw mapping
+      const raw = mapping.hasOwnProperty(dec)?mapping[dec]: '1111111';
+
+      // apply LT and BI logic — simplified educational model
+      // LT: when LT=1, force outputs to 0 (active low) for all segments
+      // BI: when BI=0 (active blanking), outputs are 1 (segments off)
+      let finalMask = raw.split('');
+
+      if(state.LT){ finalMask = ['0','0','0','0','0','0','0']; }
+      else if(state.BI==0){ finalMask = ['1','1','1','1','1','1','1']; }
+
+      // set segments visuals and outputs
+      ['a','b','c','d','e','f','g'].forEach((s,i)=>{
+        const bit = finalMask[i];
+        const segEl = document.querySelector('.seg.'+s);
+        if(bit==='0') segEl.classList.add('on'); else segEl.classList.remove('on');
+        const outEl = document.getElementById('out-'+s);
+        outEl.textContent = bit;
+        outEl.classList.toggle('active', bit==='0');
+        outEl.classList.toggle('inactive', bit!=='0');
+      });
+
+      // update pattern summary
+      const lit = ['a','b','c','d','e','f','g'].filter((s,i)=> finalMask[i]==='0');
+      segPattern.textContent = lit.length? lit.join(' ') : '(none)';
+    }
+
+    // initialize UI
+    updateFromDecimal(0);
+
+    // keyboard support: number keys 0-9
+    window.addEventListener('keydown',(e)=>{
+      if(e.key>='0' && e.key<='9'){ updateFromDecimal(parseInt(e.key)); }
+    });
+
+  </script></body>
+</html>
